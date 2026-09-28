@@ -3,7 +3,7 @@ crewai
 google-generativeai
 google-genai
 faiss-cpu
-sentence-transformers
+fastembed
 pandas
 openpyxl
 pydantic

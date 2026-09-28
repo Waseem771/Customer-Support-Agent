@@ -29,7 +29,7 @@ def get_agent():
     # Use LiteLLM-style model string — bypasses CrewAI's native Gemini provider entirely
     # and routes through LiteLLM which is already bundled with CrewAI
     llm = LLM(
-        model="model="gemini/gemini-2.0-flash"",
+        model="model="gemini/gemini-2.0-flas",
         api_key=st.secrets["GOOGLE_API_KEY"],
         temperature=0.3
     )

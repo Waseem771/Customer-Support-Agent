@@ -26,8 +26,11 @@ os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 # --- 4. Initialize LLM and Agent (Cached) ---
 @st.cache_resource
 def get_agent():
+    # Use LiteLLM-style model string — bypasses CrewAI's native Gemini provider entirely
+    # and routes through LiteLLM which is already bundled with CrewAI
     llm = LLM(
-        model="gemini/gemini-3.5-flash-lite", 
+        model="gemini/gemini-1.5-flash",
+        api_key=st.secrets["GOOGLE_API_KEY"],
         temperature=0.3
     )
 
@@ -66,7 +69,7 @@ if prompt := st.chat_input("Type your message here..."):
 
     # Compile chat history to maintain context
     chat_history = ""
-    for m in st.session_state.messages[:-1]: # Exclude the current prompt
+    for m in st.session_state.messages[:-1]:  # Exclude the current prompt
         role = "User" if m["role"] == "user" else "Assistant"
         chat_history += f"{role}: {m['content']}\n"
 
@@ -104,7 +107,6 @@ if prompt := st.chat_input("Type your message here..."):
     with st.spinner("Agent is thinking..."):
         try:
             result = crew.kickoff()
-            # Handle CrewAI output format gracefully
             response_text = getattr(result, 'raw', str(result))
         except Exception as e:
             response_text = f"I'm sorry, I encountered an internal error: {str(e)}"
@@ -112,6 +114,6 @@ if prompt := st.chat_input("Type your message here..."):
     # Append and display agent response
     st.session_state.messages.append({"role": "assistant", "content": response_text})
     st.chat_message("assistant").write(response_text)
-    
+
     # Rerun to update the sidebar if any escalations occurred
     st.rerun()

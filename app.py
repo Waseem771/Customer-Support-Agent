@@ -1,6 +1,6 @@
 import streamlit as st
 from crewai import Agent, Task, Crew, Process, LLM
-from tools import KnowledgeBaseTool, OrderDatabaseTool, HumanEscalationTool
+from tools import knowledge_base_tool, order_database_tool, human_escalation_tool
 import os
 
 # --- 1. Streamlit Page Configuration ---
@@ -26,8 +26,6 @@ os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 # --- 4. Initialize LLM and Agent (Cached) ---
 @st.cache_resource
 def get_agent():
-    # Use CrewAI's native LLM wrapper instead of LangChain to avoid Streamlit Cloud dependency issues
-    # LiteLLM (which CrewAI uses natively) uses the 'gemini/' prefix for Google models
     llm = LLM(
         model="gemini/gemini-3.5-flash-lite", 
         temperature=0.3
@@ -45,7 +43,7 @@ def get_agent():
         verbose=True,
         allow_delegation=False,
         llm=llm,
-        tools=[KnowledgeBaseTool(), OrderDatabaseTool(), HumanEscalationTool()]
+        tools=[knowledge_base_tool, order_database_tool, human_escalation_tool]
     )
 
 support_agent = get_agent()

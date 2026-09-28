@@ -6,3 +6,4 @@ sentence-transformers
 pandas
 openpyxl
 pydantic
+chromadb>=0.5.0

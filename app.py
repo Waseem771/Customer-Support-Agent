@@ -1,6 +1,5 @@
 import streamlit as st
-from langchain_google_genai import ChatGoogleGenerativeAI
-from crewai import Agent, Task, Crew, Process
+from crewai import Agent, Task, Crew, Process, LLM
 from tools import KnowledgeBaseTool, OrderDatabaseTool, HumanEscalationTool
 import os
 
@@ -18,7 +17,6 @@ with st.sidebar:
         st.info("No pending escalations.")
 
 # --- 3. API Key Management via Streamlit Secrets ---
-# In Streamlit Cloud, these are set in the project settings.
 if "GOOGLE_API_KEY" not in st.secrets:
     st.error("Missing GOOGLE_API_KEY. Please add it to your Streamlit secrets.")
     st.stop()
@@ -27,15 +25,14 @@ os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
 # --- 4. Initialize LLM and Agent (Cached) ---
 @st.cache_resource
-def get_llm():
-    # Using the requested 2026 Gemini model
-    return ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash-lite", 
+def get_agent():
+    # Use CrewAI's native LLM wrapper instead of LangChain to avoid Streamlit Cloud dependency issues
+    # LiteLLM (which CrewAI uses natively) uses the 'gemini/' prefix for Google models
+    llm = LLM(
+        model="gemini/gemini-3.5-flash-lite", 
         temperature=0.3
     )
 
-@st.cache_resource
-def get_agent():
     return Agent(
         role="Customer Support Specialist",
         goal="Assist customers with queries, check order details, provide company information, and escalate issues when necessary.",
@@ -47,7 +44,7 @@ def get_agent():
         ),
         verbose=True,
         allow_delegation=False,
-        llm=get_llm(),
+        llm=llm,
         tools=[KnowledgeBaseTool(), OrderDatabaseTool(), HumanEscalationTool()]
     )
 

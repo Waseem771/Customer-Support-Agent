@@ -1,6 +1,6 @@
 streamlit
 crewai
-langchain-google-genai
+google-generativeai
 faiss-cpu
 sentence-transformers
 pandas

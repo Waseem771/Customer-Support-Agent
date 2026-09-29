@@ -51,10 +51,9 @@ if not GROQ_API_KEY_VALUE:
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY_VALUE
 
 # -----------------------------------------------------------------------
-# Model — Groq via OpenAI-compatible endpoint (avoids groq SDK import issues)
-# Using openai/ prefix + base_url is the most reliable way on Streamlit Cloud.
+# Model — Groq via OpenAI-compatible endpoint
 # -----------------------------------------------------------------------
-MODEL_NAME    = "openai/llama-3.3-70b-versatile"
+MODEL_NAME    = "openai/qwen/qwen3-27b"
 GROQ_API_BASE = "https://api.groq.com/openai/v1"
 
 # --- 4. Initialize LLM and Agent (Cached) ---

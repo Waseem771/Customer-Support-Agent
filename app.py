@@ -10,9 +10,18 @@ st.title("🤖 AI Customer Support Agent")
 # --- 2. Sidebar for Escalations Dashboard ---
 with st.sidebar:
     st.header("📋 Pending Escalations")
-    if "escalations" in st.session_state and st.session_state.escalations:
-        for idx, esc in enumerate(st.session_state.escalations):
-            st.warning(f"**Escalation #{idx+1}**\n\n**Status:** {esc['status']}\n\n**Summary:** {esc['summary']}")
+    if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "escalations.json")):
+        try:
+            import json
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "escalations.json"), "r", encoding="utf-8") as f:
+                escalations = json.load(f)
+            if escalations:
+                for esc in reversed(escalations):
+                    st.warning(f"**{esc.get('id', 'Escalation')}**\n\n**Status:** {esc['status']}\n\n**Summary:** {esc['summary']}")
+            else:
+                st.info("No pending escalations.")
+        except Exception:
+            st.info("No pending escalations.")
     else:
         st.info("No pending escalations.")
 

@@ -73,15 +73,27 @@ def order_database_tool(query: str) -> str:
     except Exception as e:
         return f"Error accessing order database: {str(e)}. Make sure 'Orders_Tracking_Sheet.xlsx' is in the repository."
 
+_ESCALATIONS_PATH = os.path.join(_HERE, "escalations.json")
+
 @tool("Escalate to Human Agent")
 def human_escalation_tool(summary: str) -> str:
     """Use this tool ONLY when you cannot solve the problem yourself, or if the user explicitly requests to speak with a human."""
-    if "escalations" not in st.session_state:
-        st.session_state.escalations = []
+    escalations = []
+    if os.path.exists(_ESCALATIONS_PATH):
+        try:
+            with open(_ESCALATIONS_PATH, "r", encoding="utf-8") as f:
+                escalations = json.load(f)
+        except Exception:
+            pass
 
-    st.session_state.escalations.append({
+    new_id = f"ESC-{len(escalations) + 1:04d}"
+    escalations.append({
+        "id": new_id,
         "summary": summary,
         "status": "Pending"
     })
 
-    return "SUCCESS: The issue has been recorded in the escalation system. Tell the user that their request has been successfully escalated to a human agent who will reach out to them."
+    with open(_ESCALATIONS_PATH, "w", encoding="utf-8") as f:
+        json.dump(escalations, f, indent=4)
+
+    return f"SUCCESS: The issue has been recorded in the escalation system as {new_id}. Tell the user that their request has been successfully escalated to a human agent who will reach out to them."

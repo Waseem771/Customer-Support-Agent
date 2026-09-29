@@ -1,0 +1,30 @@
+# ── Streamlit secrets (NEVER commit this) ─────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── Python cache ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Excel lock files ──────────────────────────────────────────────────────────
+~$*.xlsx
+~$*.xls
+
+# ── IDE / editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

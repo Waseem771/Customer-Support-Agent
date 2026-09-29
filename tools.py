@@ -64,14 +64,14 @@ def order_database_tool(query: str) -> str:
     """Use this tool to look up customer order details such as status, shipping address, and products."""
     try:
         df = pd.read_excel(_ORDERS_PATH)
-        match = df[(df['Order ID'].astype(str).str.contains(query, case=False, na=False)) |
-                   (df['Customer Name'].astype(str).str.contains(query, case=False, na=False))]
+        match = df[(df['Order_ID'].astype(str).str.contains(query, case=False, na=False)) |
+                   (df['Customer_Name'].astype(str).str.contains(query, case=False, na=False))]
 
         if not match.empty:
             return match.to_string(index=False)
         return f"No order found matching '{query}'."
     except Exception as e:
-        return f"Error accessing order database: {str(e)}. Make sure 'orders.xlsx' is uploaded."
+        return f"Error accessing order database: {str(e)}. Make sure 'Orders_Tracking_Sheet.xlsx' is in the repository."
 
 @tool("Escalate to Human Agent")
 def human_escalation_tool(summary: str) -> str:

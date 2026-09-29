@@ -16,12 +16,39 @@ with st.sidebar:
     else:
         st.info("No pending escalations.")
 
-# --- 3. API Key Management via Streamlit Secrets ---
-if "GROQ_API_KEY" not in st.secrets:
-    st.error("Missing GROQ_API_KEY. Please add it to your Streamlit secrets.")
+# --- 3. API Key Management — checks st.secrets then os.environ ---
+def _get_groq_key() -> str:
+    # 1. Streamlit secrets (local .streamlit/secrets.toml or Cloud dashboard)
+    try:
+        key = st.secrets.get("GROQ_API_KEY", "")
+        if key:
+            return key
+    except Exception:
+        pass
+    # 2. Environment variable fallback (useful for Docker / CI)
+    key = os.environ.get("GROQ_API_KEY", "")
+    if key:
+        return key
+    return ""
+
+GROQ_API_KEY_VALUE = _get_groq_key()
+
+if not GROQ_API_KEY_VALUE:
+    st.error(
+        "❌ **Missing GROQ_API_KEY.**\n\n"
+        "Add it to `.streamlit/secrets.toml`:\n"
+        "```toml\n"
+        'GROQ_API_KEY = "gsk_...your_key_here..."\n'
+        "```\n"
+        "Or set it as an environment variable before launching:\n"
+        "```powershell\n"
+        "$env:GROQ_API_KEY = 'gsk_...your_key_here...'\n"
+        "streamlit run app.py\n"
+        "```"
+    )
     st.stop()
 
-os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+os.environ["GROQ_API_KEY"] = GROQ_API_KEY_VALUE
 
 # -----------------------------------------------------------------------
 # Model configuration — using Groq's OpenAI-compatible API
@@ -34,7 +61,7 @@ GROQ_API_BASE = "https://api.groq.com/openai/v1"
 def get_agent():
     llm = LLM(
         model=MODEL_NAME,
-        api_key=st.secrets["GROQ_API_KEY"],
+        api_key=GROQ_API_KEY_VALUE,
         base_url=GROQ_API_BASE,
         temperature=0.3
     )

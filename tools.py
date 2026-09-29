@@ -1,10 +1,19 @@
 import json
+import os
 import numpy as np
 import pandas as pd
 import faiss
 from fastembed import TextEmbedding
 from crewai.tools import tool
 import streamlit as st
+
+# Resolve paths relative to this file so they work on Streamlit Cloud
+# (CWD on Cloud is the repo root, but index files live in "fiass Indexes/")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_INDEX_DIR = os.path.join(_HERE, "fiass Indexes")
+_FAISS_PATH  = os.path.join(_INDEX_DIR, "faiss.index")
+_CHUNKS_PATH = os.path.join(_INDEX_DIR, "chunks.json")
+_ORDERS_PATH = os.path.join(_HERE, "Orders_Tracking_Sheet.xlsx")
 
 # Cache the embedding model and FAISS index — loads only once per session
 @st.cache_resource
@@ -13,8 +22,8 @@ def load_knowledge_base():
         # fastembed uses ONNX runtime (no torch/torchvision needed)
         # It auto-downloads the model on first boot
         model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
-        index = faiss.read_index("faiss.index")
-        with open("chunks.json", "r", encoding="utf-8") as f:
+        index = faiss.read_index(_FAISS_PATH)
+        with open(_CHUNKS_PATH, "r", encoding="utf-8") as f:
             chunks = json.load(f)
         return model, index, chunks
     except Exception as e:
@@ -54,7 +63,7 @@ def knowledge_base_tool(query: str) -> str:
 def order_database_tool(query: str) -> str:
     """Use this tool to look up customer order details such as status, shipping address, and products."""
     try:
-        df = pd.read_excel("Orders_Tracking_Sheet.xlsx")
+        df = pd.read_excel(_ORDERS_PATH)
         match = df[(df['Order ID'].astype(str).str.contains(query, case=False, na=False)) |
                    (df['Customer Name'].astype(str).str.contains(query, case=False, na=False))]
 

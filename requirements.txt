@@ -1,10 +1,9 @@
 streamlit
 crewai
-google-generativeai
-google-genai
+groq
+openai
 faiss-cpu
 fastembed
 pandas
 openpyxl
 pydantic
-chromadb>=0.5.0

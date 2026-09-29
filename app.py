@@ -17,20 +17,25 @@ with st.sidebar:
         st.info("No pending escalations.")
 
 # --- 3. API Key Management via Streamlit Secrets ---
-if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("Missing GOOGLE_API_KEY. Please add it to your Streamlit secrets.")
+if "GROQ_API_KEY" not in st.secrets:
+    st.error("Missing GROQ_API_KEY. Please add it to your Streamlit secrets.")
     st.stop()
 
-os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
+os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+
+# -----------------------------------------------------------------------
+# Model configuration — using Groq's OpenAI-compatible API
+# -----------------------------------------------------------------------
+MODEL_NAME = "openai/gpt-oss-120b"
+GROQ_API_BASE = "https://api.groq.com/openai/v1"
 
 # --- 4. Initialize LLM and Agent (Cached) ---
 @st.cache_resource
 def get_agent():
-    # Use LiteLLM-style model string — bypasses CrewAI's native Gemini provider entirely
-    # and routes through LiteLLM which is already bundled with CrewAI
     llm = LLM(
-        model="gemini/gemini-3.1-flash-lite",
-        api_key=st.secrets["GOOGLE_API_KEY"],
+        model=MODEL_NAME,
+        api_key=st.secrets["GROQ_API_KEY"],
+        base_url=GROQ_API_BASE,
         temperature=0.3
     )
 
@@ -51,7 +56,33 @@ def get_agent():
 
 support_agent = get_agent()
 
-# --- 5. Chat Interface and Session State ---
+# --- 5. Helper: Run Crew ---
+def run_crew_with_fallback(task: Task) -> str:
+    """
+    Runs the crew using Groq's openai/gpt-oss-120b model.
+    Returns the agent's response or a friendly error message.
+    """
+    try:
+        crew = Crew(
+            agents=[support_agent],
+            tasks=[task],
+            verbose=True,
+            process=Process.sequential
+        )
+        result = crew.kickoff()
+        return getattr(result, "raw", str(result))
+
+    except Exception as e:
+        err_str = str(e)
+        if any(kw in err_str for kw in ("429", "rate", "quota", "overload")):
+            return (
+                "I'm sorry, the AI service is currently experiencing high demand. "
+                "Please wait a moment and try again.\n\n"
+                f"_Error: {err_str}_"
+            )
+        return f"I'm sorry, I encountered an error: {err_str}"
+
+# --- 6. Chat Interface and Session State ---
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Hello! I'm your virtual support assistant. How can I help you today?"}
@@ -61,7 +92,7 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# --- 6. Handle User Input ---
+# --- 7. Handle User Input ---
 if prompt := st.chat_input("Type your message here..."):
     # Append user message
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -76,13 +107,13 @@ if prompt := st.chat_input("Type your message here..."):
     # Define the CrewAI Task with dynamic context
     task_description = f"""
     You are currently chatting with a user. Read the chat history below to understand the ongoing context.
-    
+
     === Chat History ===
     {chat_history}
     ====================
-    
+
     Latest User Query: {prompt}
-    
+
     Instructions:
     1. Respond to the user's latest query directly and naturally.
     2. If they ask about an order, use the 'Search Order Database' tool.
@@ -96,20 +127,9 @@ if prompt := st.chat_input("Type your message here..."):
         agent=support_agent
     )
 
-    crew = Crew(
-        agents=[support_agent],
-        tasks=[task],
-        verbose=True,
-        process=Process.sequential
-    )
-
-    # Run the agent
+    # Run the agent with automatic model fallback on 503 errors
     with st.spinner("Agent is thinking..."):
-        try:
-            result = crew.kickoff()
-            response_text = getattr(result, 'raw', str(result))
-        except Exception as e:
-            response_text = f"I'm sorry, I encountered an internal error: {str(e)}"
+        response_text = run_crew_with_fallback(task)
 
     # Append and display agent response
     st.session_state.messages.append({"role": "assistant", "content": response_text})

@@ -51,10 +51,10 @@ if not GROQ_API_KEY_VALUE:
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY_VALUE
 
 # -----------------------------------------------------------------------
-# Model configuration — using Groq (llama-3.3-70b-versatile)
-# The "groq/" prefix tells LiteLLM to route to Groq automatically.
+# Model configuration — using Groq's OpenAI-compatible API
 # -----------------------------------------------------------------------
-MODEL_NAME = "groq/llama-3.3-70b-versatile"
+MODEL_NAME = "openai/gpt-oss-20b"
+GROQ_API_BASE = "https://api.groq.com/openai/v1"
 
 # --- 4. Initialize LLM and Agent (Cached) ---
 @st.cache_resource
@@ -62,6 +62,7 @@ def get_agent():
     llm = LLM(
         model=MODEL_NAME,
         api_key=GROQ_API_KEY_VALUE,
+        base_url=GROQ_API_BASE,
         temperature=0.3
     )
 
